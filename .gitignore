@@ -1,0 +1,19 @@
+# Entorno virtual de Python
+.venv/
+
+# Secretos y credenciales: nunca se suben
+.env
+
+# Archivos generados por Python y pytest
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Datos generados con scripts/generar_ventas.py
+data/
+
+# Salida del demo generar_modelos.py
+modelos_generados.py
+
+# Configuración personal del editor
+.vscode/
