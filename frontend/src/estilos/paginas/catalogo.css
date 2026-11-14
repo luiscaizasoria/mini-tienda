@@ -1,0 +1,8 @@
+/* Estilos de la pantalla del catálogo */
+
+/* Cuadrícula: tantas columnas de 200px como quepan */
+.pagina-catalogo__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--espacio-m);
+}

@@ -1,0 +1,16 @@
+/* Estilos globales: reglas que afectan a toda la página */
+
+/* Fuente, márgenes y colores de la página */
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+/* Contenedor central con ancho máximo */
+#app {
+  max-width: var(--ancho-maximo);
+  margin: 0 auto;
+  padding: var(--espacio-m);
+}

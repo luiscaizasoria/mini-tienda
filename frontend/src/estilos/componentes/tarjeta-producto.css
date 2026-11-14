@@ -1,0 +1,20 @@
+/* Estilos del componente tarjeta de producto */
+
+/* Caja de la tarjeta */
+.tarjeta-producto {
+  background: var(--color-superficie);
+  border-radius: var(--radio);
+  padding: var(--espacio-m);
+  box-shadow: var(--sombra);
+}
+
+/* Nombre del producto */
+.tarjeta-producto h2 {
+  margin: 0 0 var(--espacio-s);
+  font-size: 1.1rem;
+}
+
+/* Precio y stock */
+.tarjeta-producto p {
+  margin: 0.25rem 0;
+}
