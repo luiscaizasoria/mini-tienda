@@ -21,3 +21,16 @@ export async function pedirJson<T>(
   // Convierte el cuerpo JSON de la respuesta al tipo esperado
   return (await respuesta.json()) as T
 }
+
+// Envía datos a la API con POST en formato JSON y devuelve la respuesta.
+export function enviarJson<T>(ruta: string, cuerpo: unknown): Promise<T> {
+  // Reutiliza pedirJson indicando método, formato y contenido
+  return pedirJson<T>(ruta, {
+    // POST se usa para crear recursos nuevos
+    method: 'POST',
+    // Avisa a la API que el contenido viaja como JSON
+    headers: { 'Content-Type': 'application/json' },
+    // Convierte el objeto de TypeScript en texto JSON
+    body: JSON.stringify(cuerpo),
+  })
+}

@@ -1,0 +1,60 @@
+/* Estilos compartidos por todos los formularios */
+
+/* Caja del formulario */
+.formulario {
+  display: grid;
+  gap: var(--espacio-s);
+  background: var(--color-superficie);
+  border-radius: var(--radio);
+  padding: var(--espacio-m);
+  box-shadow: var(--sombra);
+  margin-bottom: var(--espacio-m);
+}
+
+/* Título del formulario */
+.formulario h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Etiqueta y campo, uno debajo del otro */
+.formulario label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+/* Campos de texto y número */
+.formulario input {
+  padding: var(--espacio-s);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  font: inherit;
+}
+
+/* Botón de guardar */
+.formulario button {
+  padding: var(--espacio-s) var(--espacio-m);
+  border: 0;
+  border-radius: var(--radio);
+  background: var(--color-primario);
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Botón mientras se envía */
+.formulario button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Zona de mensajes (vacía no ocupa espacio) */
+.formulario__mensaje {
+  margin: 0;
+}
+
+/* Mensaje de error */
+.formulario__mensaje--error {
+  color: var(--color-error);
+}

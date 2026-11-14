@@ -13,10 +13,13 @@ frontend/
 └── src/
     ├── main.ts              Arranque: solo conecta piezas
     ├── config/              Configuración (lee las variables de entorno)
+    ├── router/              Enrutador: qué pantalla se muestra según la dirección (#/...)
     ├── paginas/             Pantallas completas
     ├── componentes/         Piezas reutilizables (tarjeta, botón, formulario)
     ├── servicios/           Comunicación con la API
     ├── tipos/               Interfaces de TypeScript (forma de los datos)
+    ├── validaciones/        Reglas que revisan datos antes de enviarlos
+    ├── utilidades/          Ayudas pequeñas (crear elementos HTML)
     └── estilos/             Todo el CSS
         ├── variables.css    Colores, espacios, tamaños
         ├── base.css         Reglas globales
@@ -28,10 +31,11 @@ frontend/
 
 | Quiero añadir...                  | Va en...                                  |
 |-----------------------------------|-------------------------------------------|
-| Una pantalla nueva                | `paginas/nombre.ts` + `estilos/paginas/nombre.css` |
+| Una pantalla nueva                | `paginas/nombre.ts` + `estilos/paginas/nombre.css`, y registrarla en `router/enlaces.ts` (menú) y `router/rutas.ts` |
 | Una pieza que se repite           | `componentes/nombre.ts` + `estilos/componentes/nombre.css` |
 | Una llamada nueva a la API        | `servicios/recurso.ts`                    |
 | La forma de un dato de la API     | `tipos/recurso.ts`                        |
+| Reglas para validar un formulario | `validaciones/recurso.ts` (funciones puras, sin DOM) |
 | Un color o espacio                | `estilos/variables.css`                   |
 | Una variable de configuración     | `.env.*` + `config/env.d.ts` + `config/entorno.ts` |
 

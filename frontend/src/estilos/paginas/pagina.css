@@ -1,0 +1,10 @@
+/* Estilos compartidos por todas las pantallas */
+
+/* Aviso informativo (por ejemplo, "requiere login") */
+.aviso {
+  padding: var(--espacio-m);
+  border-left: 4px solid var(--color-primario);
+  border-radius: var(--radio);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
+}

@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Módulos que contienen los grupos de rutas (routers)
-from app.api.routers import me, pedidos, productos
+from app.api.routers import categorias, me, pedidos, productos, ventas
 # Configuración leída desde variables de entorno
 from app.core.config import settings
 
@@ -28,3 +28,7 @@ app.include_router(productos.router)
 app.include_router(me.router)
 # Registra las rutas privadas de pedidos (/mis-pedidos)
 app.include_router(pedidos.router)
+# Registra las rutas de categorías (/categorias)
+app.include_router(categorias.router)
+# Registra las rutas de ventas, solo lectura (/ventas)
+app.include_router(ventas.router)

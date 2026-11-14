@@ -1,0 +1,26 @@
+/* Estilos del componente paginador */
+
+/* Fila con botón, texto y botón */
+.paginador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-m);
+  margin-top: var(--espacio-m);
+}
+
+/* Botones Anterior y Siguiente */
+.paginador button {
+  padding: var(--espacio-s) var(--espacio-m);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  background: var(--color-superficie);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Botón desactivado (primera o última página) */
+.paginador button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

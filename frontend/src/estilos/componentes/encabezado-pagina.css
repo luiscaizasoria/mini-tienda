@@ -1,0 +1,17 @@
+/* Estilos del componente encabezado de pantalla */
+
+/* Separación respecto al contenido */
+.encabezado-pagina {
+  margin-bottom: var(--espacio-m);
+}
+
+/* Título de la pantalla */
+.encabezado-pagina h1 {
+  margin: 0 0 var(--espacio-s);
+}
+
+/* Línea de ayuda en un gris más suave */
+.encabezado-pagina p {
+  margin: 0;
+  color: var(--color-texto-suave);
+}

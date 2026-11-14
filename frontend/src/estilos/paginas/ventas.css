@@ -1,0 +1,8 @@
+/* Estilos de la pantalla de ventas */
+
+/* Resumen de ventas e ingresos, destacado sobre la tabla */
+.pagina-ventas__resumen {
+  margin: 0 0 var(--espacio-m);
+  font-size: 1.1rem;
+  font-weight: 600;
+}

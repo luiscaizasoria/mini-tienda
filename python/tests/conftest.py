@@ -20,8 +20,8 @@ from app.models import Base
 
 
 @pytest.fixture
-def client():
-    """Cliente HTTP conectado a una base de datos temporal en memoria."""
+def motor():
+    """Motor de una base de datos temporal en memoria, con las tablas."""
     # Base de datos SQLite en memoria: no toca Supabase
     engine = create_engine(
         "sqlite://",
@@ -30,8 +30,26 @@ def client():
     )
     # Crea todas las tablas en la base temporal
     Base.metadata.create_all(engine)
+    # Entrega el motor a quien lo pida
+    yield engine
+    # Cierra la base temporal al terminar la prueba
+    engine.dispose()
+
+
+@pytest.fixture
+def sesion_bd(motor):
+    """Sesión para preparar datos directamente en la base temporal."""
+    # Abre una sesión y la cierra sola al terminar
+    with sessionmaker(bind=motor)() as session:
+        # Entrega la sesión a la prueba
+        yield session
+
+
+@pytest.fixture
+def client(motor):
+    """Cliente HTTP conectado a la base de datos temporal."""
     # Fábrica de sesiones para la base temporal
-    testing_session = sessionmaker(bind=engine)
+    testing_session = sessionmaker(bind=motor)
 
     def override_get_db():
         """Entrega sesiones de la base temporal en lugar de la real."""
@@ -48,5 +66,3 @@ def client():
         yield test_client
     # Restaura las dependencias originales
     app.dependency_overrides.clear()
-    # Cierra la base temporal
-    engine.dispose()

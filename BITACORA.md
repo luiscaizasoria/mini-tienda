@@ -15,6 +15,8 @@ Registro de lo que se hizo, archivo por archivo, y de cómo encaja todo.
 | 5 | Crear el frontend | Vite + TypeScript puro, sin frameworks. |
 | 6 | Primer catálogo | La interfaz pide los productos a la API y los dibuja. |
 | 7 | Estándar del frontend | Estructura por capas, estilos organizados y configuración por ambiente (sin valores fijos en el código). |
+| 8 | Formulario de productos | Crear productos desde la interfaz, con validación en el navegador y `POST` a la API. |
+| 9 | Navegación y pantallas por tabla | Página de inicio, menú, enrutador y una pantalla de prueba por tabla; la API suma `/categorias` y `/ventas`. |
 
 ---
 
@@ -39,10 +41,13 @@ mini-tienda/
     ├── src/
     │   ├── main.ts          Arranque
     │   ├── config/          Variables de entorno
+    │   ├── router/          Enrutador: qué pantalla se muestra según la dirección
     │   ├── paginas/         Pantallas
     │   ├── componentes/     Piezas reutilizables
     │   ├── servicios/       Llamadas a la API
     │   ├── tipos/           Forma de los datos
+    │   ├── validaciones/    Reglas de validación de formularios
+    │   ├── utilidades/      Ayudas pequeñas (crear elementos HTML)
     │   └── estilos/         Todo el CSS
     └── package.json, tsconfig.json
 ```
@@ -73,6 +78,9 @@ mini-tienda/
 | `api/routers/productos.py` | Rutas públicas del catálogo: `GET /productos`, `GET /productos/{id}`, `POST /productos`. | Comentado. |
 | `api/routers/pedidos.py` | Rutas privadas: pedidos del usuario con sesión. | Comentado. |
 | `api/routers/me.py` | Devuelve los datos del usuario del token. | Comentado. |
+| `api/routers/categorias.py` | Categorías: `GET /categorias` y `POST /categorias`. | **Nuevo (etapa 9).** |
+| `api/routers/ventas.py` | Ventas en solo lectura: `GET /ventas?limite=&desplazamiento=` (paginado, límite 1–100) y `GET /ventas/resumen` (conteo e ingresos calculados por la base). | **Nuevo (etapa 9).** |
+| `schemas/categoria.py`, `schemas/venta.py` | Validación y forma de salida de categorías y ventas (`PaginaVentas`, `ResumenVentas`). | **Nuevos (etapa 9).** |
 | `__init__.py` (varios) | Marcar las carpetas como paquetes de Python. | Antes vacíos, ahora con una línea de descripción. |
 
 ### 3.3 Backend: resto de `python/`
@@ -80,7 +88,7 @@ mini-tienda/
 | Archivo o carpeta | Objetivo | Qué se hizo |
 |---|---|---|
 | `migrations/env.py` y `versions/*.py` | Alembic: crear y versionar las tablas. | Reescritos con PEP 8 y comentarios. Los identificadores de revisión **no cambiaron**, así que la cadena sigue intacta. |
-| `tests/` | Probar la API con SQLite en memoria, sin tocar Supabase. | Reescritos; los 4 tests pasan. |
+| `tests/` | Probar la API con SQLite en memoria, sin tocar Supabase. | Reescritos. En la etapa 9 se añadieron `test_categorias.py` y `test_ventas.py`, y `conftest.py` ganó las fixtures `motor` y `sesion_bd` para preparar datos. **11 tests pasan.** |
 | `scripts/` | Generar, cargar y analizar 100.000 ventas. | Comentados y con PEP 8. |
 | `demos/` | Ejercicios: decoradores, generadores, ORM, JWT, RLS. | Agrupados en `python_basico/`, `base_de_datos/` y `supabase_auth/`. |
 | `requirements.txt` | Dependencias exactas. | Faltaban `PyJWT`, `cryptography` y `supabase`. Además fijaba `websockets 17.4`, incompatible con `supabase`. Se regeneró con `pip freeze` desde el entorno que funcionaba. |
@@ -95,18 +103,40 @@ mini-tienda/
 | Archivo | Objetivo | Qué hace |
 |---|---|---|
 | `index.html` | La única página de la aplicación. | Tiene un `<div id="app">` vacío y carga `src/main.ts`. |
-| `src/main.ts` | Arranque. | Importa los estilos globales y monta la pantalla del catálogo. No tiene lógica propia. |
+| `src/main.ts` | Arranque. | Arma el diseño general (cabecera con marca y menú, y una zona central) y activa el enrutador. Sin lógica propia. |
+| `src/router/enlaces.ts` | **Única fuente de las pantallas.** | Lista de `{ruta, titulo, descripcion, requiereLogin}`. El menú y la página de inicio leen de aquí. |
+| `src/router/rutas.ts` | Relacionar cada ruta con la función que construye su pantalla. | Una tabla `ruta -> función`. |
+| `src/router/enrutador.ts` | Cambiar de pantalla sin recargar la página. | Escucha el evento `hashchange` (la parte `#/...` de la dirección) y dibuja la pantalla; si la ruta no existe muestra "no encontrada". Usa `#` para funcionar en cualquier hosting estático sin configurar el servidor. |
+| `src/router/ruta-actual.ts` | Leer la ruta de la dirección. | `"#/productos"` pasa a `"/productos"`. |
+| `src/utilidades/dom.ts` | Crear elementos HTML sin repetir código. | `crearElemento(etiqueta, clase, texto)`; el texto se inserta como texto plano. |
 | `src/config/env.d.ts` | Decirle a TypeScript qué variables de entorno existen. | Declara `VITE_API_URL`. |
 | `src/config/entorno.ts` | **Única puerta a la configuración.** | Lee `VITE_API_URL`, falla con un mensaje claro si falta y exporta `entorno.apiUrl`. |
-| `src/tipos/producto.ts` | Describir un producto de la API. | `interface Producto`. El precio es `string` porque Pydantic envía los `Decimal` como texto. |
-| `src/servicios/cliente-api.ts` | Cliente HTTP base. | `pedirJson<T>()` une la URL base con la ruta, hace `fetch` y revisa errores HTTP. |
-| `src/servicios/productos.ts` | Operaciones de productos. | `obtenerProductos()` llama a `GET /productos`. |
+| `src/tipos/producto.ts` | Describir los datos de producto. | `Producto` (lo que devuelve la API) y `NuevoProducto` (lo que se envía para crear). El precio es `string` porque Pydantic usa texto para los `Decimal`. |
+| `src/validaciones/producto.ts` | Reglas de validación del producto. | `validarProducto()` devuelve la lista de errores: nombre 2–150 caracteres, precio > 0 con hasta 2 decimales, stock entero ≥ 0. Refleja `ProductoCreate` del backend. Es una función pura, sin DOM. |
+| `src/servicios/cliente-api.ts` | Cliente HTTP base. | `pedirJson<T>()` hace `fetch` y revisa errores HTTP; `enviarJson<T>()` hace `POST` con JSON. |
+| `src/servicios/productos.ts` | Operaciones de productos. | `obtenerProductos()` (`GET /productos`) y `crearProducto()` (`POST /productos`). |
 | `src/componentes/tarjeta-producto.ts` | Pieza reutilizable. | Crea la tarjeta de un producto. |
-| `src/paginas/catalogo.ts` | Pantalla del catálogo. | Arma el título y la lista, muestra "Cargando...", lista vacía y error. |
+| `src/componentes/formulario-producto.ts` | Formulario de creación. | Lee los campos con `FormData`, cambia la coma por punto en el precio, valida, bloquea el botón mientras envía y avisa a la pantalla al terminar. |
+| `src/paginas/inicio.ts` | **Página de inicio.** | Explica qué es el proyecto, cómo se conectan interfaz, API y base de datos, y ofrece una tarjeta de acceso a cada tabla. |
+| `src/paginas/productos.ts` | Pantalla de productos (antes `catalogo.ts`). | Formulario y tarjetas; al guardar vuelve a cargar la lista. Muestra "Cargando...", lista vacía y error. |
+| `src/paginas/categorias.ts` | Pantalla de categorías. | Formulario y tabla; llama a `GET` y `POST /categorias`. |
+| `src/paginas/ventas.ts` | Pantalla de ventas. | Resumen, tabla de 20 filas y paginador; llama a `GET /ventas` y `GET /ventas/resumen`. |
+| `src/paginas/requiere-login.ts` | Pantalla de `/usuarios` y `/pedidos`. | Aviso de que son datos privados que se activarán con el login. |
+| `src/paginas/no-encontrada.ts` | Pantalla para rutas inexistentes. | Mensaje y enlace al inicio. |
+| `src/componentes/menu-navegacion.ts` | Menú. | Un enlace por pantalla; marca la actual con `aria-current="page"`. |
+| `src/componentes/encabezado-pagina.ts` | Título + línea de ayuda. | Lo usan todas las pantallas. |
+| `src/componentes/tabla-datos.ts` | Tabla genérica. | `crearTabla<T>(columnas, filas)`: sirve para cualquier tipo de dato. |
+| `src/componentes/paginador.ts` | Botones Anterior / Siguiente. | Muestra "1–20 de 100.000" y desactiva los extremos. |
+| `src/componentes/campo-formulario.ts` | Campo con etiqueta. | Extraído de `formulario-producto.ts` para reutilizarlo. |
+| `src/componentes/formulario-categoria.ts` | Formulario de categorías. | Con la misma estructura que el de productos. |
+| `src/servicios/categorias.ts`, `servicios/ventas.ts` | Llamadas a la API. | `obtenerCategorias`, `crearCategoria`, `obtenerVentas`, `obtenerResumenVentas`. |
+| `src/tipos/categoria.ts`, `tipos/venta.ts`, `validaciones/categoria.ts` | Tipos y reglas de las nuevas tablas. | Reflejan los esquemas de Python. |
 | `src/estilos/variables.css` | Valores de diseño. | Colores, espacios, radios, sombra y ancho máximo. |
 | `src/estilos/base.css` | Estilos globales. | Fuente, fondo y contenedor central. |
-| `src/estilos/paginas/catalogo.css` | CSS de la pantalla. | Cuadrícula de tarjetas. |
+| `src/estilos/paginas/*.css` | CSS por pantalla. | `inicio`, `productos`, `ventas` y `pagina.css` (común a todas). |
 | `src/estilos/componentes/tarjeta-producto.css` | CSS del componente. | Caja, nombre, precio y stock. |
+| `src/estilos/componentes/formulario.css` | CSS de todos los formularios. | Antes `formulario-producto.css`; ahora lo comparten productos y categorías. |
+| `src/estilos/componentes/*.css` (resto) | CSS por componente. | Menú, tabla, paginador y encabezado. |
 | `.env.development` | Variables del ambiente de desarrollo. | `VITE_API_URL=http://127.0.0.1:8000`. Sin secretos, por eso se sube a Git. |
 | `.env.example` | Plantilla para otros ambientes. | Explica los modos de Vite y cómo crear `.env.production` o `.env.staging`. |
 | `README.md` | Estándar del frontend. | Estructura, tabla "¿Dónde pongo...?", reglas y manejo de ambientes. |
@@ -124,7 +154,7 @@ mini-tienda/
 ┌────────────────────────────────┐        ┌──────────────────────────┐      ┌────────────┐
 │ index.html                     │        │ FastAPI  (app/main.py)   │      │ PostgreSQL │
 │  └─ main.ts                    │        │  └─ routers/productos.py │      │ tabla      │
-│      └─ paginas/catalogo.ts    │ fetch  │      └─ SQLAlchemy ──────┼─────▶│ productos  │
+│      └─ paginas/productos.ts   │ fetch  │      └─ SQLAlchemy ──────┼─────▶│ productos  │
 │          ├─ servicios/         │───────▶│         (models/)        │      └────────────┘
 │          │   productos.ts      │◀───────┤  responde JSON           │
 │          │   └ cliente-api.ts  │  JSON  │  (schemas/ lo valida)    │
@@ -138,24 +168,50 @@ mini-tienda/
 **El recorrido de una visita, paso a paso:**
 
 1. El navegador abre `localhost:5173`. **Vite** entrega `index.html`, que carga `main.ts`.
-2. `main.ts` importa los estilos globales y monta la pantalla `crearPaginaCatalogo()`.
+2. `main.ts` importa los estilos globales y arma la cabecera y activa el enrutador (`router/enrutador.ts`), que según la dirección `#/...` elige la pantalla; en `#/productos` es `crearPaginaProductos()`.
 3. Al cargarse, `config/entorno.ts` lee `VITE_API_URL` del archivo `.env` del modo actual (en desarrollo, `.env.development`).
-4. `paginas/catalogo.ts` muestra "Cargando productos..." y llama a `obtenerProductos()`.
+4. `paginas/productos.ts` muestra "Cargando productos..." y llama a `obtenerProductos()`.
 5. `servicios/productos.ts` delega en `pedirJson()` de `cliente-api.ts`, que hace `fetch` a `<VITE_API_URL>/productos`.
 6. El navegador nota que la página (puerto 5173) y la API (puerto 8000) son **orígenes distintos**. Por eso la API responde con la cabecera CORS `Access-Control-Allow-Origin: http://localhost:5173`. Sin ella, el navegador bloquearía la respuesta.
 7. En la API, `routers/productos.py` recibe la petición. `dependencies.get_db` le entrega una sesión de base de datos.
 8. SQLAlchemy ejecuta `SELECT` sobre la tabla `productos` (clase `Producto` en `models/`).
 9. El esquema `ProductoRead` convierte cada fila en JSON, por ejemplo `{"id":1,"nombre":"Agua 500 ml","precio":"0.75","stock":100}`.
 10. De vuelta en el navegador, `pedirJson()` convierte el JSON en un arreglo de `Producto`.
-11. `catalogo.ts` crea una tarjeta por producto con `componentes/tarjeta-producto.ts` y reemplaza el "Cargando...".
+11. `productos.ts` crea una tarjeta por producto con `componentes/tarjeta-producto.ts` y reemplaza el "Cargando...".
+
+**El recorrido al navegar entre pantallas (etapa 9):**
+
+1. `main.ts` dibuja la cabecera (marca + menú) y una zona central vacía, y llama a `iniciarEnrutador()`.
+2. El enrutador lee la dirección con `rutaActual()` (`#/ventas` pasa a `/ventas`), busca esa ruta en `rutas.ts` y dibuja la pantalla en la zona central.
+3. Al pulsar un enlace del menú cambia solo el `#...` de la dirección: el navegador **no recarga la página** y dispara el evento `hashchange`.
+4. El enrutador responde a ese evento cambiando la pantalla; el menú responde al mismo evento moviendo la marca de "activo".
+5. Para añadir una pantalla nueva solo se toca `router/enlaces.ts` (menú e inicio la muestran solos) y `router/rutas.ts`.
+
+**El recorrido de la pantalla de ventas (etapa 9):** al abrirla pide `GET /ventas/resumen` (la base cuenta y suma las 100.000 filas y viaja una sola línea) y `GET /ventas?limite=20&desplazamiento=0` (viajan 20 filas, no 100.000). Cada clic en Siguiente o Anterior pide otra página con otro `desplazamiento`.
+
+**El recorrido al crear un producto (etapa 8):**
+
+1. El usuario escribe nombre, precio y stock, y pulsa "Guardar producto" (o Enter).
+2. `formulario-producto.ts` captura el evento `submit` y llama a `preventDefault()` para que el navegador no recargue la página.
+3. Lee los campos con `FormData` y arma un `NuevoProducto` (cambia `2,50` por `2.50`).
+4. `validaciones/producto.ts` revisa las reglas. Si hay errores, se muestran en rojo y **no se envía nada**.
+5. Si todo está bien, se bloquea el botón y `servicios/productos.ts` hace `POST /productos` mediante `enviarJson()`.
+6. Antes del `POST`, el navegador envía una petición previa (`OPTIONS`, el *preflight* de CORS) porque el contenido es JSON. La API responde que `POST` y `Content-Type` están permitidos.
+7. En la API, `ProductoCreate` valida de nuevo (la validación del navegador no es una defensa, solo una comodidad), `routers/productos.py` guarda la fila y responde 201 con el producto.
+8. El formulario se vacía, avisa a `paginas/productos.ts` y esta recarga la lista, donde aparece el producto nuevo.
 
 **Decisiones de diseño a recordar:**
+- **Validar en dos lugares:** el navegador da avisos rápidos; la API es la que realmente protege los datos.
+- **Precio como texto:** se envía `"2.50"` y no el número `2.5`, para no perder decimales por redondeo de punto flotante.
+- **`noValidate` en el formulario:** se desactiva la validación del navegador para que los mensajes sean todos en español y con el mismo estilo.
 - **`textContent` en lugar de `innerHTML`** al pintar datos de la API. Así, un producto con HTML malicioso en el nombre se muestra como texto y no se ejecuta.
 - **Una responsabilidad por carpeta:** `tipos/` (datos), `servicios/` (red), `componentes/` y `paginas/` (pantalla), `estilos/` (CSS). Cada archivo cambia por una sola razón.
 - **Una dependencia por capa:** las pantallas usan componentes y servicios; los servicios usan `cliente-api.ts`; nadie más habla con `fetch`.
 - **Sin valores fijos:** la URL de la API vive en `.env.*` y solo `config/entorno.ts` la lee. Cambiar de ambiente no toca el código.
 - **Ambientes por modo de Vite:** `npm run dev` lee `.env.development`; `npm run build -- --mode staging` lee `.env.staging`. Se comprobó que cada build incrusta su propia URL.
 - **CORS configurable:** solo los orígenes de `cors_origins` pueden leer la API desde un navegador. Para otro ambiente se define `CORS_ORIGINS` en el `.env` de Python, sin editar código.
+- **`usuarios` no se expone:** contiene correos de personas. Las pantallas de usuarios y pedidos avisan que requieren login, y la API no tiene ninguna ruta pública que devuelva usuarios.
+- **Ventas paginadas con tope de 100:** pedir 100.000 filas de una vez sería lento e innecesario; la API rechaza `limite` mayor que 100 con 422. El desplazamiento (`offset`) es simple pero se vuelve lento en páginas muy profundas; la alternativa es la paginación por llave que ya se practicó en `demos/base_de_datos/paginas_generador.py`.
 - **Las variables `VITE_*` son públicas:** quedan dentro del JavaScript que descarga el navegador. Nunca van contraseñas ahí.
 - **Pruebas sin Supabase:** los tests usan SQLite en memoria, así que se pueden correr sin conexión ni credenciales.
 
@@ -187,14 +243,15 @@ Pruebas del backend: `cd python` y luego `pytest`.
 
 ## 6. Observaciones y pendientes
 
-- **Datos duplicados:** la tabla `productos` tiene dos filas "Jugo" (ids 4 y 5), probablemente de pruebas anteriores.
-- **`POST /productos` es público:** cualquiera puede crear productos. Conviene protegerlo con el token de Supabase.
-- **`Categoria` sin migración:** existe el modelo, pero Alembic no tiene una migración que cree la tabla.
-- **Faltan tests** de `/mis-pedidos` y de autenticación.
+- **Datos de prueba:** la tabla `productos` tiene dos filas "Jugo" (ids 4 y 5) y un "Arroz" creado desde el formulario.
+- **`POST /categorias` también es público**, igual que `POST /productos`.
+- **`POST /productos` es público:** cualquiera puede crear productos, y ahora el formulario lo usa tal cual. Conviene protegerlo con el token de Supabase cuando llegue el login; entonces el formulario solo debería mostrarse a usuarios con sesión.
+- **`Categoria` sin migración:** la tabla existe en Supabase y ahora tiene API, pero Alembic no tiene una migración que la cree. En una base nueva no se crearía con `alembic upgrade head`.
+- **Faltan tests** de `/mis-pedidos` y de autenticación. En el frontend no hay pruebas automáticas; solo se ha comprobado con capturas de un navegador real.
 
 ## 7. Próximos pasos del frontend
 
-1. Formulario para crear productos, con validación.
-2. Login con Supabase y rutas protegidas. Aquí hará falta un enrutador sencillo para cambiar de pantalla; por ahora `main.ts` monta una sola.
+1. ~~Formulario para crear productos, con validación.~~ Hecho en la etapa 8.
+2. Login con Supabase y rutas protegidas. El enrutador ya existe; falta que `rutas.ts` decida según la sesión y activar las pantallas de usuarios y pedidos.
 3. Pedidos del usuario (`/mis-pedidos`).
 4. Cuando se necesite la clave de Supabase en el frontend, añadir `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` (solo la clave *publishable*, nunca una secreta).

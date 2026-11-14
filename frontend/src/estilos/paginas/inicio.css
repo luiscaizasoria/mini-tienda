@@ -1,0 +1,59 @@
+/* Estilos de la pantalla de inicio */
+
+/* Separación entre bloques */
+.inicio__bloque {
+  margin-bottom: calc(var(--espacio-m) * 2);
+}
+
+/* Títulos de bloque */
+.inicio__bloque h2 {
+  margin: 0 0 var(--espacio-s);
+  font-size: 1.25rem;
+}
+
+/* Listas con espacio entre elementos */
+.inicio__bloque li {
+  margin-bottom: var(--espacio-s);
+}
+
+/* Cuadrícula de tarjetas de tablas */
+.inicio__tablas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--espacio-m);
+}
+
+/* Tarjeta que es un enlace a una pantalla */
+.inicio__tarjeta {
+  display: block;
+  padding: var(--espacio-m);
+  border-radius: var(--radio);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Resalta la tarjeta al pasar el mouse */
+.inicio__tarjeta:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Título y texto de la tarjeta */
+.inicio__tarjeta h3 {
+  margin: 0 0 var(--espacio-s);
+}
+
+.inicio__tarjeta p {
+  margin: 0 0 var(--espacio-s);
+  color: var(--color-texto-suave);
+}
+
+/* Etiqueta "Requiere login" */
+.inicio__etiqueta {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color-fondo);
+  font-size: 0.8rem;
+}

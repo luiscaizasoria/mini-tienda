@@ -9,3 +9,14 @@ export interface Producto {
   // Unidades disponibles
   stock: number
 }
+
+// Datos que se envían para crear un producto, igual a ProductoCreate
+// en python/app/schemas/producto.py (todavía no tiene id: lo genera la BD)
+export interface NuevoProducto {
+  // Nombre del producto
+  nombre: string
+  // Precio como texto, para no perder decimales (por ejemplo "2.50")
+  precio: string
+  // Unidades disponibles
+  stock: number
+}

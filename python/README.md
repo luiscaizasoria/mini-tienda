@@ -64,6 +64,10 @@ uvicorn app.main:app --reload
 | GET    | `/me`              | Token   | Datos del usuario del token  |
 | GET    | `/mis-pedidos`     | Token   | Pedidos del usuario          |
 | POST   | `/mis-pedidos`     | Token   | Crea un pedido               |
+| GET    | `/categorias`      | Público | Lista las categorías         |
+| POST   | `/categorias`      | Público | Crea una categoría           |
+| GET    | `/ventas`          | Público | Página de ventas (`limite` 1–100, `desplazamiento`) |
+| GET    | `/ventas/resumen`  | Público | Número de ventas e ingresos totales |
 
 ## Pruebas
 
