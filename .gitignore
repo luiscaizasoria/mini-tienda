@@ -17,3 +17,7 @@ modelos_generados.py
 
 # Configuración personal del editor
 .vscode/
+
+# Frontend (TypeScript / Node.js)
+node_modules/
+dist/
